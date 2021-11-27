@@ -1,0 +1,59 @@
+version: '3'
+
+networks:
+  web:
+    external:
+      name: web
+
+
+
+services:
+  reverse-proxy:
+    # The official v2.0 Traefik docker image
+    image: traefik:v2.5.4
+    restart: always
+    container_name: traefik
+
+      ## Log Settings (options: ERROR, DEBUG, PANIC, FATAL, WARN, INFO) - https://docs.traefik.io/observability/logs/ ##
+      # - --log.level=DEBUG # <== Setting the level of the logs from traefik
+      ## Provider Settings - https://docs.traefik.io/providers/docker/#provider-configuration ##
+    
+
+    ports:
+      - "80:80" # <== http
+      - "443:443" # <== https
+      # OPTIONAL: Dashboard port:
+      # - "8080:8080" # <== :8080 is the Traefik dashboard's default port,
+      # should be protected with auth in production or not exposed at all
+    volumes:
+      - './letsencrypt:/letsencrypt' # <== Volume for certs (TLS)
+      - '/var/run/docker.sock:/var/run/docker.sock:ro' # <== Volume for docker admin -- set :ro
+      - './rules:/rules'
+      - './logs/traefik.log:/traefik.log'
+      - './dynamic:/dynamic:ro' # <== Volume for dynamic conf file, **ref: line 27
+      - './shared:/shared'
+      - "./traefik.yml:/traefik.yml:ro"
+      - "./users_credentials:/users_credentials:ro"
+
+    networks:
+      - web # <== Placing traefik on the network named web, to access containers on this network
+
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+      CF_ZONE_API_TOKEN: ${CF_ZONE_API_TOKEN}
+
+    labels:
+    #### Labels define the behavior and rules of the traefik proxy for this container ####
+      - "traefik.enable=true" # <== Enable traefik on itself to view dashboard and assign subdomain to view it
+      - "traefik.http.routers.reverse-proxy.entrypoints=websecure"
+      - "traefik.http.routers.reverse-proxy.rule=Host(`example.com`) && (PathPrefix(`/api`) || PathPrefix(`/traefik`))"
+      #- "traefik.http.routers.reverse-proxy.rule=Host(`dashboard.example.com`)"  #  <== Alternative dashboard URL format: subdomains
+      - "traefik.http.routers.reverse-proxy.tls=true"
+      - "traefik.http.routers.reverse-proxy.tls.certresolver=defaultResolver"
+      - "traefik.http.routers.reverse-proxy.tls.options=tlsoptions@file"
+
+      - "traefik.http.routers.reverse-proxy.middlewares=strip-traefik,basicAuth"
+
+      - "traefik.http.routers.reverse-proxy.service=api@internal"
+      - "traefik.http.middlewares.auth.basicAuth.users=admin:password"
+      - "traefik.http.middlewares.strip-traefik.stripprefix.prefixes=/traefik"

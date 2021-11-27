@@ -1,0 +1,65 @@
+
+http:
+  routers:
+
+    portainer:
+      entryPoints:
+        - websecure
+      rule: "Host(`example.com`) && PathPrefix(`/portainer`)"
+      service: portainer
+      middlewares:
+        - slash
+      tls:
+        certResolver: defaultResolver
+        options: tlsoptions
+
+
+
+  services:
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.1:9000"
+
+
+
+
+
+  middlewares:
+    httpsRedirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    www-redirect:
+      redirectRegex:
+        regex: "^https://www.(.*)"
+        replacement: "https://${1}"
+        permanent: true
+
+
+    slash:
+      chain:
+        middlewares:
+          - slash1
+          - slash2
+    slash1:
+      redirectRegex:
+        regex: "^(https?://[^/]+/[a-z0-9_]+)$$"
+        replacement: "$1/"
+        permanent: true
+    slash2:
+      stripprefixregex:
+        regex: "/[a-z0-9_]+"
+
+
+    auth:
+      basicAuth:
+        users:
+          - "admin:password"
+
+tls:
+  options:
+    tlsoptions:
+      minversion: VersionTLS12
+

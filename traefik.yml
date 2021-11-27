@@ -1,0 +1,57 @@
+## STATIC CONFIGURATION
+log:
+  level: INFO
+
+global:
+  # Send anonymous usage data
+  sendAnonymousUsage: true
+
+api:
+  ## API Settings - https://docs.traefik.io/operations/api/, endpoints - https://docs.traefik.io/operations/api/#endpoints ##
+  insecure: false
+  dashboard: true
+  debug: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: defaultResolver
+
+    forwardedHeaders:
+      trustedIPs:
+        - '173.245.48.0/20'
+        - '103.21.244.0/22'
+        - '103.22.200.0/22'
+        - '103.31.4.0/22'
+        - '141.101.64.0/18'
+        - '108.162.192.0/18'
+        - '190.93.240.0/20'
+
+
+certificatesResolvers:
+  defaultResolver:
+    acme:
+      email: ${CERT_DOMAIN}
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 0
+
+providers:
+  file:
+    directory: /dynamic
+    watch: true
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    network: "web"
+    exposedByDefault: false
