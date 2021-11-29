@@ -41,7 +41,7 @@ entryPoints:
 certificatesResolvers:
   defaultResolver:
     acme:
-      email: ${CERT_DOMAIN}
+      email: ${CERT_EMAIL}
       storage: /letsencrypt/acme.json
       dnsChallenge:
         provider: cloudflare
