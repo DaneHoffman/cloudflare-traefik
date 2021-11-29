@@ -52,7 +52,7 @@ services:
       - "traefik.http.routers.reverse-proxy.tls.certresolver=defaultResolver"
       - "traefik.http.routers.reverse-proxy.tls.options=tlsoptions@file"
 
-      - "traefik.http.routers.reverse-proxy.middlewares=strip-traefik,basicAuth"
+      - "traefik.http.routers.reverse-proxy.middlewares=strip-traefik,auth"
 
       - "traefik.http.routers.reverse-proxy.service=api@internal"
       - "traefik.http.middlewares.auth.basicAuth.users=admin:password"
