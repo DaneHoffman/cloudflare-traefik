@@ -6,7 +6,7 @@ http:
       entryPoints:
         - websecure
       rule: "Host(`example.com`) && PathPrefix(`/portainer`)"
-      service: portainer
+      service: portainer@docker 
       middlewares:
         - slash
       tls:
@@ -14,35 +14,37 @@ http:
         options: tlsoptions
 
 
+  # Example manual service config, for services that aren't dockerized: 
 
-  services:
-    portainer:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.1.1:9000"
+  # services:
+  #   portainer:
+  #     loadBalancer:
+  #       servers:
+  #         - url: "http://192.168.1.1:9000"
 
 
 
-
+# Middlewares: Includes some basic middlewares that have proven useful
 
   middlewares:
-    httpsRedirect:
+    httpsRedirect:  # <== For ensuring all http requests are redirected to https
       redirectScheme:
         scheme: https
         permanent: true
 
-    www-redirect:
+    www-redirect:  # <== For redirecting www urls to non-www urls. For instance, www.example.com > example.com
       redirectRegex:
         regex: "^https://www.(.*)"
         replacement: "https://${1}"
         permanent: true
 
 
-    slash:
+    slash:  # <== Strips a router's subpath so that a web application can work correctly. See: portainer router for an example
       chain:
         middlewares:
           - slash1
           - slash2
+
     slash1:
       redirectRegex:
         regex: "^(https?://[^/]+/[a-z0-9_]+)$$"
@@ -53,7 +55,8 @@ http:
         regex: "/[a-z0-9_]+"
 
 
-    auth:
+    auth:  # <== Adds a username/password authentication challenge to a service. Use htpasswd to generate hash. 
+    # Documentation: https://doc.traefik.io/traefik/v2.0/middlewares/basicauth/
       basicAuth:
         users:
           - "admin:password"
@@ -61,5 +64,5 @@ http:
 tls:
   options:
     tlsoptions:
-      minversion: VersionTLS12
+      minversion: VersionTLS12  # <== Sets the minimum TLS version, for added security.
 
