@@ -45,3 +45,4 @@ To set a container name to a custom setting, use the `container_name:` key.
 
 4. Edit the `dynamic/backend.yml` file (or create your own .yml file in `dynamic/`) and create a router for each service you want to expose. Use the name of your container and add `@docker` to tell Traefik that the service you want to expose is a docker container.
 5. Go to the `traefik` project directory and run `docker-compose up -d` to start the reverse proxy in background mode. Optional: Run `docker-compose logs -f` to follow the logs and check for configuration errors
+6. Go to `example.com/traefik` to access the dashboard
