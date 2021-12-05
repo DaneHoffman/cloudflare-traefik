@@ -30,15 +30,15 @@ services:
       - '/var/run/docker.sock:/var/run/docker.sock:ro' # <== Volume for docker admin -- set :ro
       - './rules:/rules'
       - './logs/traefik.log:/traefik.log'
-      - './dynamic:/dynamic:ro' # <== Volume for dynamic conf file, **ref: line 27
+      - './dynamic:/dynamic:ro' # <== Volume for dynamic config directory
       - './shared:/shared'
-      - "./traefik.yml:/traefik.yml:ro"
+      - "./traefik.yml:/traefik.yml:ro" 
       - "./users_credentials:/users_credentials:ro"
 
     networks:
       - web # <== Placing traefik on the network named web, to access containers on this network
 
-    environment:
+    environment: # <== Uses variables in the .env file to input API tokens.
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       CF_ZONE_API_TOKEN: ${CF_ZONE_API_TOKEN}
 
@@ -51,9 +51,10 @@ services:
       - "traefik.http.routers.reverse-proxy.tls=true"
       - "traefik.http.routers.reverse-proxy.tls.certresolver=defaultResolver"
       - "traefik.http.routers.reverse-proxy.tls.options=tlsoptions@file"
+      - "traefik.http.routers.reverse-proxy.service=api@internal" # <== Sets router to "api" service, which is the traefik dashboard
 
-      - "traefik.http.routers.reverse-proxy.middlewares=strip-traefik,auth"
+      - "traefik.http.routers.reverse-proxy.middlewares=strip-traefik,auth" # <== Adds two middlewares listed below
 
-      - "traefik.http.routers.reverse-proxy.service=api@internal"
-      - "traefik.http.middlewares.auth.basicAuth.users=admin:password"
-      - "traefik.http.middlewares.strip-traefik.stripprefix.prefixes=/traefik"
+
+      - "traefik.http.middlewares.auth.basicAuth.usersfile=/users_credentials" # <== Sets up a basic authentication service using the user_credentials file
+      - "traefik.http.middlewares.strip-traefik.stripprefix.prefixes=/traefik" # <== Strips the /traefik from the router's target URL
